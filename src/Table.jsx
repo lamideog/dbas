@@ -1,7 +1,7 @@
 import {React, useState, useEffect} from 'react';
 import { Table, Layout, Menu, Pagination, Input, Form, Button, Card } from 'antd';
-
-
+// import  XLSX  from 'xlsx';
+import * as XLSX from 'xlsx/xlsx.mjs';
  
 
 function TableData() {
@@ -47,6 +47,7 @@ function TableData() {
   const [number, setnumber] = useState('')
   const [current, setcurrent] = useState(1)
   const [loading, setloading] = useState(true)
+  const [excel, setexcel] = useState()
 
   useEffect(()=>{
     fetch(`https://brunches-database.herokuapp.com/?page=${page}&fname=${fname}&lname=${lname}&email=${email}&number=${number}`)
@@ -76,6 +77,28 @@ function TableData() {
     setemail(values.email)
     setnumber(values.number)
   };
+
+  function FetchDataExcel(){
+    fetch('https://brunches-database.herokuapp.com/excel')
+      .then(res => res.json())
+      // .then((response)=>{setexcel(response.rows)})
+      .then((response)=>{
+        var wb = XLSX.utils.book_new(),
+        ws = XLSX.utils.json_to_sheet(response.rows);
+
+        XLSX.utils.book_append_sheet(wb, ws, 'sheet 1')
+        XLSX.writeFile(wb, 'myExcel.xlsx');
+      })
+      // .then(excelExport())
+}
+
+  function excelExport(){
+    var wb = XLSX.utils.book_new(),
+    ws = XLSX.utils.json_to_sheet(excel);
+
+    XLSX.utils.book_append_sheet(wb, ws, 'sheet 1')
+    XLSX.writeFile(wb, 'myExcel.xlsx');
+  }
 
   return ( 
     <>
@@ -112,12 +135,19 @@ function TableData() {
         <Table dataSource={data} columns={columns} pagination={false} loading={loading} />
       </Card>
       <br />
-      <Pagination
-        total={total}
-        current={current}
-        pageSize={pagesize}
-        onChange={onChange}
-      />
+      <div className='row d-flex'>
+        <div className='col'>
+          <Pagination
+            total={total}
+            current={current}
+            pageSize={pagesize}
+            onChange={onChange}
+          />
+        </div>
+        <div className='col-md-2 col-12'>
+          <Button onClick={()=>FetchDataExcel()}>Export to Excel</Button>
+        </div>
+      </div>
     </>
   );
 }
